@@ -4,11 +4,13 @@ import (
 	"regexp"
 	"test/crawler/engine"
 	"test/crawler/model"
+	"test/crawler_distributed/config"
 )
 
 const Re = `<div class="m-btn purple" [^>]*>([^<]+)</div>`
 const IdRe = `<div class="id" [^>]*>ID：([^<]+)</div>`
-func ParseProfile(contents []byte,url string, name string, gender string) engine.ParseResult {
+
+func parseProfile(contents []byte, url string, name string, gender string) engine.ParseResult {
 	profile := model.Profile{}
 	profile.Name = name
 	profile.Gender = gender
@@ -18,20 +20,19 @@ func ParseProfile(contents []byte,url string, name string, gender string) engine
 
 	var result engine.ParseResult
 	//条件不满足9个则舍弃
-	if len(matches) != 9{
+	if len(matches) != 9 {
 		return result
 	}
 
 	idRe := regexp.MustCompile(IdRe)
-	IdMatches := idRe.FindAllSubmatch(contents,-1)
-
+	IdMatches := idRe.FindAllSubmatch(contents, -1)
 
 	var box [9]string
 	var userId string
 	for i, m := range matches {
 		box[i] = string(m[1])
 	}
-	for _, m := range IdMatches{
+	for _, m := range IdMatches {
 		userId = string(m[1])
 	}
 
@@ -46,15 +47,36 @@ func ParseProfile(contents []byte,url string, name string, gender string) engine
 	profile.Education = box[8]
 
 	result = engine.ParseResult{
-		Items:[]engine.Item{
+		Items: []engine.Item{
 			{
-				Url:url,
-				Type:"zhenai",
-				Id:userId,
-				PayLoad:profile,
+				Url:     url,
+				Type:    "zhenai",
+				Id:      userId,
+				PayLoad: profile,
 			},
 		},
 	}
 
 	return result
+}
+
+type ProfileParser struct {
+	userName   string
+	userGender string
+}
+
+func (p *ProfileParser) Parse(contents []byte, url string) engine.ParseResult {
+	return parseProfile(contents, url, p.userName, p.userGender)
+}
+
+func (p *ProfileParser) Serialize() (name string, args []interface{}) {
+
+	return config.ParseProfile, []interface{}{p.userName, p.userGender}
+}
+
+func NewProfileParser(name string, gender string) *ProfileParser {
+	return &ProfileParser{
+		userName:   name,
+		userGender: gender,
+	}
 }

@@ -9,6 +9,7 @@ import (
 
 //给一个链接， 从网上那下一个text
 func Fetch(url string) ([]byte, error) {
+	//log.Printf("Fatching url %s", url)
 	//开一个客户端,模仿浏览器访问，解决403 Forbidden问题
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
@@ -25,6 +26,6 @@ func Fetch(url string) ([]byte, error) {
 		return nil, fmt.Errorf("wrong status code: %d", resp.StatusCode)
 	}
 
-	return  ioutil.ReadAll(resp.Body)
+	return ioutil.ReadAll(resp.Body)
 
 }

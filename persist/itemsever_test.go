@@ -13,9 +13,9 @@ import (
 func TestSave(t *testing.T) {
 
 	expected := engine.Item{
-		Url:"http://album.zhenai.com/u/1275821982",
-		Type:"zhenai",
-		Id:"1275821982",
+		Url:  "http://album.zhenai.com/u/1275821982",
+		Type: "zhenai",
+		Id:   "1275821982",
 		PayLoad: model.Profile{
 			Name:       "雪儿",
 			Gender:     "女",
@@ -34,20 +34,20 @@ func TestSave(t *testing.T) {
 			Car:   "有",
 		},
 	}
-	//保存一个Item
-	err := save(expected)
-	if err != nil{
-		panic(err)
-	}
+
 	//拿保存的Item
 	client, err := elastic.NewClient(
 		elastic.SetSniff(false))
 	if err != nil {
 		panic(err)
 	}
-
+	//保存一个Item
+	err = Save(client, "dating_profile", expected)
+	if err != nil {
+		panic(err)
+	}
 	resp, err := client.Get().Index("dating_profile").Type(expected.Type).Id(expected.Id).Do(context.Background())
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("%s", *resp.Source)
@@ -55,10 +55,10 @@ func TestSave(t *testing.T) {
 	var actual engine.Item
 	//解编成想要的结构体
 	json.Unmarshal(*resp.Source, &actual)
-	actualProfile,_ := model.FromJsonObj(actual.PayLoad)
+	actualProfile, _ := model.FromJsonObj(actual.PayLoad)
 	actual.PayLoad = actualProfile
 
-	if actual != expected{
+	if actual != expected {
 		t.Errorf("got %v; expected %v ", actual, expected)
 	}
 }
